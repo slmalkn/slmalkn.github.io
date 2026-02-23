@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Xapture Scanner – MileStone</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --blue: #0d9fff;
+    --blue-dark: #0066cc;
+    --bg: #050d1a;
+    --surface: rgba(13, 159, 255, 0.06);
+    --border: rgba(13, 159, 255, 0.18);
+    --text: #e8f4ff;
+    --muted: #7aaccc;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── Background ── */
+  .bg-grid {
+    position: fixed; inset: 0; z-index: 0;
+    background-image:
+      linear-gradient(rgba(13,159,255,.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(13,159,255,.04) 1px, transparent 1px);
+    background-size: 48px 48px;
+  }
+  .bg-glow {
+    position: fixed; top: -20%; left: 50%; transform: translateX(-50%);
+    width: 800px; height: 500px;
+    background: radial-gradient(ellipse at center, rgba(13,159,255,.18) 0%, transparent 70%);
+    pointer-events: none; z-index: 0;
+  }
+
+  /* ── Nav ── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 20px 60px;
+    background: rgba(5,13,26,.7);
+    backdrop-filter: blur(14px);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-logo {
+    display: flex; align-items: center; gap: 12px;
+  }
+  .nav-logo img {
+    width: 36px; height: 36px; border-radius: 8px;
+  }
+  .nav-logo span {
+    font-family: 'Orbitron', monospace;
+    font-size: 18px; font-weight: 800;
+    background: linear-gradient(90deg, #fff 0%, var(--blue) 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .nav-cta {
+    font-size: 13px; font-weight: 500;
+    background: var(--blue);
+    color: #fff; text-decoration: none;
+    padding: 10px 22px; border-radius: 8px;
+    transition: opacity .2s;
+  }
+  .nav-cta:hover { opacity: .85; }
+
+  /* ── Hero ── */
+  .hero {
+    position: relative; z-index: 1;
+    min-height: 100vh;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    text-align: center;
+    padding: 120px 24px 80px;
+  }
+  .hero-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 12px; font-weight: 500; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--blue);
+    border: 1px solid var(--border);
+    background: var(--surface);
+    padding: 6px 16px; border-radius: 99px;
+    margin-bottom: 32px;
+    animation: fadeUp .6s ease both;
+  }
+  .hero-badge .dot { width: 6px; height: 6px; background: var(--blue); border-radius: 50%; animation: pulse 1.5s ease-in-out infinite; }
+
+  .hero h1 {
+    font-family: 'Orbitron', monospace;
+    font-size: clamp(36px, 6vw, 72px);
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -.02em;
+    animation: fadeUp .7s .1s ease both;
+  }
+  .hero h1 span {
+    background: linear-gradient(135deg, var(--blue) 0%, #60d0ff 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .hero p {
+    margin-top: 24px;
+    font-size: 17px; font-weight: 300; color: var(--muted); max-width: 480px;
+    line-height: 1.7;
+    animation: fadeUp .7s .2s ease both;
+  }
+  .hero-actions {
+    display: flex; gap: 16px; flex-wrap: wrap; justify-content: center;
+    margin-top: 40px;
+    animation: fadeUp .7s .3s ease both;
+  }
+  .btn-primary {
+    display: inline-flex; align-items: center; gap: 10px;
+    background: var(--blue); color: #fff;
+    font-size: 15px; font-weight: 500;
+    padding: 14px 28px; border-radius: 10px; text-decoration: none;
+    transition: transform .2s, box-shadow .2s;
+    box-shadow: 0 0 32px rgba(13,159,255,.35);
+  }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 0 48px rgba(13,159,255,.5); }
+  .btn-primary svg { width: 18px; height: 18px; }
+
+  .btn-ghost {
+    display: inline-flex; align-items: center; gap: 8px;
+    border: 1px solid var(--border); color: var(--text);
+    font-size: 15px; font-weight: 400;
+    padding: 14px 28px; border-radius: 10px; text-decoration: none;
+    background: var(--surface);
+    transition: border-color .2s, background .2s;
+  }
+  .btn-ghost:hover { border-color: var(--blue); background: rgba(13,159,255,.1); }
+
+  /* ── Phone Mockup ── */
+  .phone-wrap {
+    position: relative; margin-top: 72px;
+    animation: fadeUp .8s .4s ease both;
+  }
+  .phone {
+    width: 220px;
+    background: linear-gradient(160deg, #1a2a40, #0b1629);
+    border: 1.5px solid var(--border);
+    border-radius: 36px;
+    padding: 16px 12px;
+    box-shadow: 0 32px 80px rgba(0,0,0,.6), 0 0 60px rgba(13,159,255,.15);
+    position: relative;
+    overflow: hidden;
+  }
+  .phone::before {
+    content: '';
+    position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+    width: 80px; height: 8px;
+    background: #0a1526;
+    border-radius: 0 0 10px 10px;
+    z-index: 2;
+  }
+  .phone-screen {
+    background: #0a1c33;
+    border-radius: 24px;
+    min-height: 380px;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 16px;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+  .phone-screen::before {
+    content: '';
+    position: absolute; top: -30px; left: -30px;
+    width: 120px; height: 120px;
+    background: radial-gradient(circle, rgba(13,159,255,.25), transparent 70%);
+  }
+  .scan-icon {
+    width: 64px; height: 64px;
+    border: 2px solid var(--blue);
+    border-radius: 16px;
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+  }
+  .scan-icon svg { width: 32px; height: 32px; color: var(--blue); }
+  .scan-line {
+    position: absolute; top: 30%; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, transparent, var(--blue), transparent);
+    animation: scan 2s ease-in-out infinite;
+  }
+  .phone-label { font-size: 11px; color: var(--muted); letter-spacing: .06em; text-transform: uppercase; }
+  .phone-doc {
+    width: 100%; background: rgba(255,255,255,.05);
+    border: 1px solid var(--border); border-radius: 10px;
+    padding: 10px 12px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .doc-icon { width: 28px; height: 36px; background: var(--blue); border-radius: 4px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 9px; color: #fff; font-weight: 700; }
+  .doc-lines { flex: 1; }
+  .doc-line { height: 5px; border-radius: 3px; background: rgba(255,255,255,.15); margin-bottom: 4px; }
+  .doc-line:nth-child(2) { width: 70%; }
+  .doc-line:nth-child(3) { width: 50%; margin-bottom: 0; }
+
+  /* ── Features ── */
+  .section {
+    position: relative; z-index: 1;
+    padding: 100px 24px;
+    max-width: 1100px; margin: 0 auto;
+  }
+  .section-label {
+    font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--blue); margin-bottom: 16px; font-weight: 500;
+  }
+  .section-title {
+    font-family: 'Orbitron', monospace;
+    font-size: clamp(24px, 4vw, 42px);
+    font-weight: 800; line-height: 1.15;
+    margin-bottom: 56px;
+  }
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 20px;
+  }
+  .feature-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px;
+    transition: border-color .3s, transform .3s;
+  }
+  .feature-card:hover { border-color: var(--blue); transform: translateY(-4px); }
+  .feature-icon {
+    width: 44px; height: 44px;
+    background: rgba(13,159,255,.12);
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 18px;
+    color: var(--blue);
+  }
+  .feature-icon svg { width: 22px; height: 22px; }
+  .feature-card h3 { font-size: 16px; font-weight: 500; margin-bottom: 8px; }
+  .feature-card p { font-size: 14px; color: var(--muted); line-height: 1.6; }
+
+  /* ── CTA Banner ── */
+  .cta-banner {
+    position: relative; z-index: 1;
+    margin: 0 24px 100px;
+    max-width: 900px;
+    margin-left: auto; margin-right: auto;
+    background: linear-gradient(135deg, rgba(13,159,255,.12), rgba(0,50,100,.2));
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 60px 48px;
+    text-align: center;
+    overflow: hidden;
+  }
+  .cta-banner::before {
+    content: '';
+    position: absolute; top: -60px; right: -60px;
+    width: 250px; height: 250px;
+    background: radial-gradient(circle, rgba(13,159,255,.2), transparent 70%);
+  }
+  .cta-banner h2 {
+    font-family: 'Orbitron', monospace;
+    font-size: clamp(22px, 3.5vw, 38px);
+    font-weight: 800; margin-bottom: 16px;
+  }
+  .cta-banner p { color: var(--muted); font-size: 15px; margin-bottom: 32px; }
+
+  /* ── Footer ── */
+  footer {
+    position: relative; z-index: 1;
+    border-top: 1px solid var(--border);
+    padding: 32px 60px;
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 16px;
+  }
+  footer span { font-size: 13px; color: var(--muted); }
+
+  /* ── Animations ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; } 50% { opacity: .3; }
+  }
+  @keyframes scan {
+    0%, 100% { top: 20%; } 50% { top: 75%; }
+  }
+
+  @media (max-width: 600px) {
+    nav { padding: 16px 20px; }
+    footer { padding: 24px 20px; justify-content: center; text-align: center; }
+    .cta-banner { padding: 40px 24px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="bg-grid"></div>
+<div class="bg-glow"></div>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">
+    <!-- Logo image: replace src with actual logo path or base64 -->
+    <img src="https://play-lh.googleusercontent.com/Fj70lLTBrk2tpfEGNDnNsE6VxlXRx3yL8kOPGkVdRXb_nBlN0-c8A0vKPi0R4lSEbQ=s96" alt="MileStone Logo" onerror="this.style.display='none'" />
+    <span>MileStone</span>
+  </div>
+  <a href="https://play.google.com/store/apps/details?id=com.xapture.docscanner" target="_blank" class="nav-cta">İndir</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-badge">
+    <span class="dot"></span>
+    Google Play'de Mevcut
+  </div>
+  <h1>Belgelerinizi<br/><span>Anında Tarayın</span></h1>
+  <p>Xapture Scanner ile kağıt belgelerinizi saniyeler içinde dijital formata dönüştürün. Hızlı, temiz ve güvenilir.</p>
+  <div class="hero-actions">
+    <a href="https://play.google.com/store/apps/details?id=com.xapture.docscanner" target="_blank" class="btn-primary">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3.18 23.15c.33.18.7.2 1.04.06l11.65-6.73-2.52-2.52-10.17 9.19zm-1.18-19.3v16.3c0 .5.14.93.4 1.25l.07.07 9.13-9.13v-.21L2.47 2.8l-.07.07c-.26.32-.4.75-.4 1.25v-.27zM19.37 8.6l-2.48-1.43-2.82 2.83 2.82 2.82 2.5-1.44c.71-.41.71-1.37-.02-1.78zM4.22.85L15.87 7.58l-2.52 2.52L3.18.91C3.5.77 3.88.79 4.22.85z"/></svg>
+      Google Play'den İndir
+    </a>
+    <a href="#features" class="btn-ghost">Özellikleri Keşfet</a>
+  </div>
+
+  <!-- Phone Mockup -->
+  <div class="phone-wrap">
+    <div class="phone">
+      <div class="phone-screen">
+        <div class="scan-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="7" height="7" rx="1"/>
+            <rect x="14" y="3" width="7" height="7" rx="1"/>
+            <rect x="3" y="14" width="7" height="7" rx="1"/>
+            <path d="M14 14h1v1m4-1v1h-1m0 4h1v-1m-4 0v1h1"/>
+          </svg>
+          <div class="scan-line"></div>
+        </div>
+        <div class="phone-label">Belge Algılandı</div>
+        <div class="phone-doc">
+          <div class="doc-icon">PDF</div>
+          <div class="doc-lines">
+            <div class="doc-line"></div>
+            <div class="doc-line"></div>
+            <div class="doc-line"></div>
+          </div>
+        </div>
+        <div class="phone-doc">
+          <div class="doc-icon" style="background:#22c55e;">JPG</div>
+          <div class="doc-lines">
+            <div class="doc-line"></div>
+            <div class="doc-line"></div>
+            <div class="doc-line"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="section" id="features">
+  <div class="section-label">Özellikler</div>
+  <div class="section-title">Güçlü. Hızlı.<br/>Kullanımı Kolay.</div>
+  <div class="features-grid">
+    <div class="feature-card">
+      <div class="feature-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3l18 18M10.5 10.677A2 2 0 0013.5 13.5"/><path d="M7.362 7.561C5.68 8.74 4.279 10.42 3 12c1.889 2.991 5.282 6 9 6 1.55 0 3.043-.523 4.395-1.35M12 6c3.796 0 7.143 2.991 9 6a15.66 15.66 0 01-1.078 1.5"/><path d="M12 6V3m0 18v-3"/></svg>
+      </div>
+      <h3>Akıllı Belge Algılama</h3>
+      <p>Kamera otomatik olarak belgeyi algılar ve çerçeveler. Mükemmel tarama, her seferinde.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+      </div>
+      <h3>PDF & Görsel Dışa Aktarma</h3>
+      <p>Taradığınız belgeleri PDF veya yüksek çözünürlüklü görsel olarak kaydedin ve paylaşın.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      </div>
+      <h3>Gizliliğiniz Önceliğimiz</h3>
+      <p>Tüm işlemler cihazınızda gerçekleşir. Belgeleriniz asla sunuculara gönderilmez.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>
+      </div>
+      <h3>Çoklu Sayfa Desteği</h3>
+      <p>Birden fazla sayfayı tek bir dosyada birleştirin. Belgelerinizi düzenli tutun.</p>
+    </div>
+  </div>
+</section>
+
+<!-- CTA BANNER -->
+<div class="cta-banner">
+  <h2>Hemen Başlayın</h2>
+  <p>Xapture Scanner'ı ücretsiz indirin ve belgelerinizi dijital dünyaya taşıyın.</p>
+  <a href="https://play.google.com/store/apps/details?id=com.xapture.docscanner" target="_blank" class="btn-primary">
+    <svg viewBox="0 0 24 24" fill="currentColor" style="width:18px;height:18px"><path d="M3.18 23.15c.33.18.7.2 1.04.06l11.65-6.73-2.52-2.52-10.17 9.19zm-1.18-19.3v16.3c0 .5.14.93.4 1.25l.07.07 9.13-9.13v-.21L2.47 2.8l-.07.07c-.26.32-.4.75-.4 1.25v-.27zM19.37 8.6l-2.48-1.43-2.82 2.83 2.82 2.82 2.5-1.44c.71-.41.71-1.37-.02-1.78zM4.22.85L15.87 7.58l-2.52 2.52L3.18.91C3.5.77 3.88.79 4.22.85z"/></svg>
+    Google Play'den İndir
+  </a>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <span>© 2025 MileStone. Tüm hakları saklıdır.</span>
+  <span style="color:var(--blue);">Xapture Scanner</span>
+</footer>
+
+</body>
+</html>
